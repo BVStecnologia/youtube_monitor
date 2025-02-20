@@ -1,30 +1,15 @@
-// .gitignore
-# Dependencies
-node_modules/
-package-lock.json
+# 🪟 Comandos Git - Windows (Simplificado)
 
-# Environment
-.env
-.env.local
-.env.*.local
+## 📤 ENVIAR Alterações (PUSH)
+```bash
+# 1. Ver o que mudou (opcional)
+git status
 
-# Logs
-logs/
-*.log
-npm-debug.log*
+# 2. Adicionar TODAS as alterações
+git add .
 
-# Runtime data
-pids
-*.pid
-*.seed
+# 3. Criar pacote de alterações
+git commit -m "Update: descreva o que fez"
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Sistema
-.DS_Store
-Thumbs.db
+# 4. Enviar para nuvem
+git push origin main
