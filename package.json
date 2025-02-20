@@ -1,0 +1,17 @@
+{
+  "name": "youtube-monitor",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node index.js",
+    "test": "node src/tasks/test.js",
+    "monitor": "node src/tasks/monitorChannels.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.x.x",
+    "dotenv": "^16.x.x",
+    "googleapis": "^126.x.x",
+    "node-cron": "^3.x.x"
+  }
+}
