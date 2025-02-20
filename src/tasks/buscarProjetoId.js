@@ -6,19 +6,19 @@ async function buscarProjetoId() {
     try {
         console.log('🔍 Iniciando busca de projetos...');
 
-        // 1. Busca projetos com YouTube ativo e integração
         const { data: projetos, error } = await supabase
             .from('Projeto')
             .select(`
                 id,
                 "Project name",
                 "Youtube Active",
-                Integrações!inner (
+                Integrações!Projeto_Integrações_fkey (
                     id,
                     ativo,
                     "Token",
                     "Refresh token",
-                    "Ultima atualização"
+                    "Ultima atualização",
+                    "Tipo de integração"
                 )
             `)
             .eq('Youtube Active', true);
@@ -28,22 +28,28 @@ async function buscarProjetoId() {
             return [];
         }
 
-        // 2. Para cada projeto, valida/atualiza token
+        // Validar tokens e retornar apenas projetos válidos
         const projetosValidos = [];
+        
         for (const projeto of projetos) {
             try {
-                // Tenta criar cliente YouTube (isso já valida/atualiza o token)
+                // Tenta criar cliente YouTube (isso valida o token)
                 await youtube.createYoutubeClient(projeto.id);
-                
-                // Se chegou aqui, o token é válido
+                console.log(`✅ Projeto ${projeto.id} (${projeto['Project name']}) - Token válido`);
                 projetosValidos.push(projeto);
             } catch (error) {
-                console.warn(`⚠️ Projeto ${projeto.id} com token inválido:`, error.message);
-                continue;
+                console.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Token inválido:`, error.message);
+                // Tenta limpar integrações antigas
+                await youtube.cleanupOldIntegrations(projeto.id);
             }
         }
 
-        console.log(`✅ Encontrados ${projetosValidos.length} projetos válidos`);
+        console.log('\n📊 Projetos com tokens válidos:');
+        projetosValidos.forEach(projeto => {
+            console.log(`   → Projeto ${projeto.id} (${projeto['Project name']})`);
+        });
+        console.log(`\n✅ Total: ${projetosValidos.length} projeto(s) válido(s)`);
+
         return projetosValidos;
     } catch (error) {
         console.error('❌ Erro ao processar projetos:', error);
