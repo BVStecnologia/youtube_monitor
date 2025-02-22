@@ -1,88 +1,65 @@
+// src/tasks/monitorChannels.js
 const logger = require('../utils/logger');
-const { 
-    updateTopChannels, 
-    monitorTopChannelsVideos 
-} = require('../services/channelService');
 const supabase = require('../config/supabase');
+const { buscarProjetoId } = require('./buscarProjetoId');
+const { updateTopChannels } = require('../services/channelService');
 
 async function monitorChannels() {
     try {
-        logger.info('🚀 Iniciando monitoramento de canais...');
+        logger.info('🚀 Iniciando atualização de ranking de canais...');
 
-        // 1. Busca projetos ativos com integração YouTube
-        const { data: projects, error } = await supabase
-            .from('Projeto')
-            .select(`
-                id,
-                "Project name",
-                "Youtube Active",
-                "Integrações"
-            `)
-            .eq('Youtube Active', true);
+        // 1. Busca projetos com YouTube válido
+        const projetos = await buscarProjetoId();
 
-        if (error) throw error;
+        // 2. Filtra só os ativos
+        const projetosAtivos = projetos.filter(p => p.Integrações.ativo === true);
 
-        // 2. Para cada projeto ativo
-        for (const project of projects) {
+        if (!projetosAtivos.length) {
+            logger.warn('⚠️ Nenhum projeto ativo encontrado');
+            return false;
+        }
+
+        logger.info(`📊 Processando ${projetosAtivos.length} projetos ativos:`);
+        projetosAtivos.forEach(p => logger.info(`   → ${p['Project name']} (ID: ${p.id})`));
+
+        // 3. Para cada projeto ATIVO
+        for (const project of projetosAtivos) {
             try {
-                logger.info(`📺 Processando projeto: ${project['Project name']} (ID: ${project.id})`);
+                logger.info(`\n📊 Processando ranking do projeto: ${project['Project name']}`);
 
-                // Debug: Vamos ver todos os scanners primeiro
-                const { data: scanners, errorScan } = await supabase
-                    .from('Scanner de videos do youtube')
-                    .select('*');
-                
-                logger.info(`Scanners encontrados: ${JSON.stringify(scanners, null, 2)}`);
-
-                // Verifica scanner do projeto
-                const { data: scanner } = await supabase
-                    .from('Scanner de videos do youtube')
+                const { data: channelRanking, error: rankError } = await supabase
+                    .from('channel_lead_ranking')
                     .select('*')
-                    .eq('Projeto_id', project.id)
-                    .single();
+                    .eq('projeto_id', project.id)
+                    .order('ranking_position', { ascending: true })
+                    .limit(30);
 
-                if (!scanner) {
-                    logger.error(`Projeto ${project.id} não tem scanner configurado. Pulando...`);
+                if (rankError) {
+                    logger.error(`❌ Erro ao buscar ranking:`, rankError);
                     continue;
                 }
 
-                // 2.1 Atualiza top 30 canais
-                const updateResult = await updateTopChannels(project.id);
-                if (!updateResult) {
-                    logger.error(`Falha ao atualizar canais do projeto ${project.id}`);
+                if (!channelRanking?.length) {
+                    logger.warn(`⚠️ Nenhum canal ranqueado para projeto ${project.id}`);
                     continue;
                 }
 
-                // 2.2 Configura monitoramento de vídeos
-                const monitorResult = await monitorTopChannelsVideos(project.id);
-                if (!monitorResult) {
-                    logger.error(`Falha ao configurar monitoramento do projeto ${project.id}`);
-                    continue;
+                const updated = await updateTopChannels(project.id, channelRanking);
+                if (updated) {
+                    logger.success(`✅ Ranking atualizado para ${project['Project name']}`);
                 }
 
-                logger.success(`✅ Projeto ${project['Project name']} processado com sucesso`);
             } catch (projectError) {
-                logger.error(`❌ Erro ao processar projeto ${project.id}:`, projectError);
-                continue;
+                logger.error(`❌ Erro no projeto ${project.id}:`, projectError);
             }
         }
 
-        logger.success('✅ Monitoramento de canais concluído');
+        logger.success('✅ Processamento finalizado');
         return true;
     } catch (error) {
-        logger.error('❌ Erro no monitoramento de canais:', error);
+        logger.error('❌ Erro:', error);
         return false;
     }
-}
-
-// Se executado diretamente
-if (require.main === module) {
-    monitorChannels()
-        .then(() => process.exit(0))
-        .catch(error => {
-            logger.error('❌ Erro fatal:', error);
-            process.exit(1);
-        });
 }
 
 module.exports = { monitorChannels };

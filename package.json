@@ -9,7 +9,8 @@
     "monitor": "node src/tasks/monitorChannels.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.x.x",
+    "@anthropic-ai/sdk": "^0.36.3",
+    "@supabase/supabase-js": "^2.48.1",
     "dotenv": "^16.x.x",
     "googleapis": "^126.x.x",
     "node-cron": "^3.x.x"

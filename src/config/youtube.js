@@ -47,7 +47,8 @@ async function updateRefreshToken(integrationId, newToken) {
             .from('Integrações')
             .update({
                 'Refresh token': newToken,
-                'Ultima atualização': new Date().toISOString()
+                'Ultima atualização': new Date().toISOString(),
+                'ativo': true
             })
             .eq('id', integrationId);
 
@@ -64,25 +65,56 @@ async function createYoutubeClient(projectId) {
         // Buscar token atual
         const { token, integrationId } = await getRefreshToken(projectId);
         
-        // Configurar cliente
-        oauth2Client.setCredentials({ refresh_token: token });
+        // Configurar cliente com mais opções
+        oauth2Client.setCredentials({ 
+            refresh_token: token,
+            expiry_date: Date.now() + (1000 * 60 * 60), // 1 hora
+            access_type: 'offline'
+        });
 
-        // Adicionar listener para atualização de token
+        // Tentar refresh explícito
+        try {
+            await oauth2Client.refreshAccessToken();
+            logger.info(`Token refreshed para projeto ${projectId}`);
+            
+            // Atualiza status como ativo
+            await supabase
+                .from('Integrações')
+                .update({ 
+                    ativo: true,
+                    'Ultima atualização': new Date().toISOString()
+                })
+                .eq('id', integrationId);
+
+        } catch (refreshError) {
+            logger.error(`Falha no refresh do token para projeto ${projectId}`, refreshError);
+            
+            // Se falhar o refresh, marca como inativo
+            await supabase
+                .from('Integrações')
+                .update({ 
+                    ativo: false,
+                    'Ultima atualização': new Date().toISOString()
+                })
+                .eq('id', integrationId);
+            throw refreshError;
+        }
+
+        // Listener para atualizações futuras
         oauth2Client.on('tokens', async (tokens) => {
             if (tokens.refresh_token) {
-                logger.info('Novo refresh token recebido, atualizando...');
+                logger.info(`Novo refresh token recebido para projeto ${projectId}`);
                 await updateRefreshToken(integrationId, tokens.refresh_token);
             }
         });
 
-        // Criar e retornar cliente YouTube
         return google.youtube({ 
             version: 'v3', 
             auth: oauth2Client 
         });
 
     } catch (error) {
-        logger.error('Erro ao criar cliente YouTube:', error);
+        logger.error(`Erro ao criar cliente YouTube para projeto ${projectId}:`, error);
         throw error;
     }
 }

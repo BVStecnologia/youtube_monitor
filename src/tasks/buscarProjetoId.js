@@ -1,6 +1,7 @@
 // src/tasks/buscarProjetoId.js
 const supabase = require('../config/supabase.js');
 const youtube = require('../config/youtube.js');
+const logger = require('../utils/logger.js');
 
 async function buscarProjetoId() {
     try {
@@ -28,23 +29,40 @@ async function buscarProjetoId() {
             return [];
         }
 
-        // Validar tokens e retornar apenas projetos válidos
         const projetosValidos = [];
         
         for (const projeto of projetos) {
             try {
-                // Tenta criar cliente YouTube (isso valida o token)
-                await youtube.createYoutubeClient(projeto.id);
-                console.log(`✅ Projeto ${projeto.id} (${projeto['Project name']}) - Token válido`);
-                projetosValidos.push(projeto);
+                // Tenta criar cliente YouTube e fazer uma chamada real
+                const youtubeClient = await youtube.createYoutubeClient(projeto.id);
+                
+                // Testa se o token realmente funciona
+                try {
+                    await youtubeClient.channels.list({
+                        part: 'snippet',
+                        mine: true
+                    });
+                    
+                    console.log(`✅ Projeto ${projeto.id} (${projeto['Project name']}) - Integração funcionando`);
+                    projetosValidos.push(projeto);
+                } catch (apiError) {
+                    console.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Token inválido:`, apiError.message);
+                    
+                    // Atualiza status da integração no Supabase
+                    await supabase
+                        .from('Integrações')
+                        .update({ 
+                            ativo: false,
+                            status: 'Requer reautorização'
+                        })
+                        .eq('id', projeto.Integrações.id);
+                }
             } catch (error) {
-                console.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Token inválido:`, error.message);
-                // Tenta limpar integrações antigas
-                await youtube.cleanupOldIntegrations(projeto.id);
+                console.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Erro na integração:`, error.message);
             }
         }
 
-        console.log('\n📊 Projetos com tokens válidos:');
+        console.log('\n📊 Projetos com integração válida:');
         projetosValidos.forEach(projeto => {
             console.log(`   → Projeto ${projeto.id} (${projeto['Project name']})`);
         });
