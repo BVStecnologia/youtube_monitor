@@ -1,18 +1,22 @@
 # 🪟 Comandos Git - Windows (Simplificado)
 
-## 📤 ENVIAR/PUXAR Alterações
-```bash
-# 1. Ver o que mudou (opcional)
+# 1. Verificar se há alterações remotas (opcional)
+git fetch
+
+# 2. Ver diferenças entre local e remoto (opcional)
 git status
 
-# 2. Adicionar TODAS as alterações
-git add .
+# 3. Puxar e aplicar alterações da nuvem
+git pull origin main
 
-# 3. Criar pacote de alterações
-git commit -m "Update: descreva o que fez"
+# 4. Em caso de conflitos, resolver e depois:
+git add .
+git commit -m "Fix: resolução de conflitos"
+git push origin main
 
 # 4. Enviar para nuvem
 git push origin main
 
-# 5. Puxar alterações (SEMPRE FAÇA ANTES DE COMEÇAR!)
+git stash
 git pull origin main
+git stash pop
