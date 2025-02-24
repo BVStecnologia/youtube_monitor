@@ -1,22 +1,13 @@
-# 🪟 Comandos Git - Windows (Simplificado)
+# Enviar para nuvem (3 em 1)
+git add . && git commit -m "Sua mensagem" && git push origin main
 
-# 1. Verificar se há alterações remotas (opcional)
-git fetch
+# Comandos básicos
+git status              # Ver estado das mudanças
+git pull origin main    # Baixar atualizações
+git fetch               # Verificar se há mudanças
+git clone url-do-repo   # Clonar repositório
 
-# 2. Ver diferenças entre local e remoto (opcional)
-git status
-
-# 3. Puxar e aplicar alterações da nuvem
-git pull origin main
-
-# 4. Em caso de conflitos, resolver e depois:
-git add .
-git commit -m "Fix: resolução de conflitos"
-git push origin main
-
-# 4. Enviar para nuvem
-git push origin main
-
-git stash
-git pull origin main
-git stash pop
+# Em caso de problemas
+git status              # Ver estado/conflitos
+git reset --hard        # Desfazer tudo local
+git pull origin main    # Forçar baixar da nuvem

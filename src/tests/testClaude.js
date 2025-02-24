@@ -1,54 +1,67 @@
 // src/tests/testClaude.js
-const { analyzeContent, summarizeContent } = require('../config/claude');
+const { analyzeContent } = require('../config/claude');
 const logger = require('../utils/logger');
 
-async function testClaude() {
+async function testarClaude() {
     try {
-        logger.info('\n🧪 Iniciando testes do Claude...\n');
+        console.log('\n🧪 Iniciando teste do Claude...');
 
-        // Teste de análise
-        logger.info('1️⃣ Testando análise de relevância...');
-        const analysisResult = await analyzeContent(
-            "Machine learning é uma área fascinante da inteligência artificial que permite que computadores aprendam com dados.",
-            "Buscamos conteúdo sobre tecnologia e programação avançada"
-        );
+        // Teste 1: Prompt simples
+        console.log('\n1️⃣ Testando prompt simples...');
+        const promptSimples = "Quanto é 2+2? Responda apenas com o número.";
+        console.log('📝 Prompt:', promptSimples);
         
-        if (analysisResult) {
-            logger.info('\n📊 Resultado da análise:');
-            logger.info(`→ Relevante: ${analysisResult.relevante}`);
-            logger.info(`→ Score: ${analysisResult.score}`);
-            logger.info(`→ Razão: ${analysisResult.razao}\n`);
-        } else {
-            logger.error('❌ Análise não retornou resultado\n');
-        }
+        const resposta1 = await analyzeContent(promptSimples);
+        console.log('✨ Resposta do Claude:', resposta1);
 
-        // Teste de sumarização
-        logger.info('2️⃣ Testando sumarização...');
-        const summary = await summarizeContent(
-            "A inteligência artificial está revolucionando diversos setores da indústria. " +
-            "Empresas de todos os tamanhos estão adotando soluções baseadas em IA para automatizar processos, " +
-            "melhorar a experiência do cliente e tomar decisões mais precisas. Machine learning, " +
-            "uma subárea da IA, tem se mostrado particularmente eficaz em análise de dados e previsões."
-        );
+        // Teste 2: Prompt pedindo JSON
+        console.log('\n2️⃣ Testando resposta em JSON...');
+        const promptJson = `Retorne um JSON simples com a seguinte estrutura:
+{
+    "numero": 42,
+    "texto": "teste"
+}`;
+        console.log('📝 Prompt:', promptJson);
         
-        if (summary) {
-            logger.info('\n📝 Resumo gerado:');
-            logger.info(`→ ${summary}\n`);
+        const resposta2 = await analyzeContent(promptJson);
+        console.log('✨ Resposta do Claude:', resposta2);
+
+        // Teste 3: Prompt com contexto
+        console.log('\n3️⃣ Testando prompt com contexto...');
+        const promptContexto = `Contexto: Você é um professor de matemática.
+Explique o que é um número primo em uma frase.`;
+        console.log('📝 Prompt:', promptContexto);
+        
+        const resposta3 = await analyzeContent(promptContexto);
+        console.log('✨ Resposta do Claude:', resposta3);
+
+        // Validação
+        const testesPassaram = [resposta1, resposta2, resposta3].every(r => r !== null);
+
+        console.log('\n📊 Resultado dos testes:');
+        console.log('→ Teste 1:', resposta1 ? '✅' : '❌');
+        console.log('→ Teste 2:', resposta2 ? '✅' : '❌');
+        console.log('→ Teste 3:', resposta3 ? '✅' : '❌');
+
+        if (testesPassaram) {
+            console.log('\n✅ Todos os testes passaram!\n');
         } else {
-            logger.error('❌ Sumarização não retornou resultado\n');
+            console.log('\n❌ Alguns testes falharam!\n');
         }
 
-        // Resultado final
-        if (analysisResult && summary) {
-            logger.success('✅ Todos os testes concluídos com sucesso!\n');
-        } else {
-            logger.warn('⚠️ Alguns testes não foram bem sucedidos\n');
-        }
+        return testesPassaram;
 
     } catch (error) {
-        logger.error('❌ Erro nos testes:', error);
+        console.error('\n❌ Erro nos testes:', error);
+        return false;
     }
 }
 
-// Executa o teste
-testClaude();
+// Executa se chamado diretamente
+if (require.main === module) {
+    testarClaude().then(sucesso => {
+        process.exit(sucesso ? 0 : 1);
+    });
+}
+
+module.exports = { testarClaude };

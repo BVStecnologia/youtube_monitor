@@ -3,9 +3,9 @@ const supabase = require('../config/supabase.js');
 const youtube = require('../config/youtube.js');
 const logger = require('../utils/logger.js');
 
-async function buscarProjetoId() {
+const buscarProjetoId = async () => {
     try {
-        console.log('🔍 Iniciando busca de projetos...');
+        logger.info('🔍 Iniciando busca de projetos...');
 
         const { data: projetos, error } = await supabase
             .from('Projeto')
@@ -25,7 +25,7 @@ async function buscarProjetoId() {
             .eq('Youtube Active', true);
 
         if (error) {
-            console.error('❌ Erro ao buscar projetos:', error);
+            logger.error('❌ Erro ao buscar projetos:', error);
             return [];
         }
 
@@ -43,10 +43,10 @@ async function buscarProjetoId() {
                         mine: true
                     });
                     
-                    console.log(`✅ Projeto ${projeto.id} (${projeto['Project name']}) - Integração funcionando`);
+                    logger.success(`✅ Projeto ${projeto.id} (${projeto['Project name']}) - Integração funcionando`);
                     projetosValidos.push(projeto);
                 } catch (apiError) {
-                    console.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Token inválido:`, apiError.message);
+                    logger.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Token inválido: ${apiError.message}`);
                     
                     // Atualiza status da integração no Supabase
                     await supabase
@@ -58,21 +58,21 @@ async function buscarProjetoId() {
                         .eq('id', projeto.Integrações.id);
                 }
             } catch (error) {
-                console.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Erro na integração:`, error.message);
+                logger.warn(`⚠️ Projeto ${projeto.id} (${projeto['Project name']}) - Erro na integração: ${error.message}`);
             }
         }
 
-        console.log('\n📊 Projetos com integração válida:');
+        logger.info('\n📊 Projetos com integração válida:');
         projetosValidos.forEach(projeto => {
-            console.log(`   → Projeto ${projeto.id} (${projeto['Project name']})`);
+            logger.info(`   → Projeto ${projeto.id} (${projeto['Project name']})`);
         });
-        console.log(`\n✅ Total: ${projetosValidos.length} projeto(s) válido(s)`);
+        logger.success(`\n✅ Total: ${projetosValidos.length} projeto(s) válido(s)`);
 
         return projetosValidos;
     } catch (error) {
-        console.error('❌ Erro ao processar projetos:', error);
+        logger.error('❌ Erro ao processar projetos:', error);
         return [];
     }
-}
+};
 
 module.exports = { buscarProjetoId };

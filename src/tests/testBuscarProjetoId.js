@@ -1,33 +1,38 @@
 // src/tests/testBuscarProjetoId.js
 const { buscarProjetoId } = require('../tasks/buscarProjetoId.js');
+const logger = require('../utils/logger.js');
 
-async function testBuscarProjetoId() {
+const testBuscarProjetoId = async () => {
     try {
-        console.log('\n🚀 Testando busca de projetos...');
+        logger.info('\n🚀 Testando busca de projetos...');
         
         const projetos = await buscarProjetoId();
         
         if (!projetos || projetos.length === 0) {
-            console.log('⚠️ Nenhum projeto com integração válida encontrado');
+            logger.warn('⚠️ Nenhum projeto com integração válida encontrado');
             return;
         }
 
-        console.log('\n📊 Resultado do teste:');
+        logger.info('\n📊 Resultado do teste:');
         projetos.forEach(projeto => {
-            console.log(`
+            // Pega primeira integração (assumindo que é a correta)
+            const integracao = projeto.Integrações;
+            
+            logger.info(`
     Projeto: ${projeto.id} (${projeto['Project name']})
-    → Status: ${projeto.Integrações.ativo ? '✅ Ativo' : '❌ Inativo'}
-    → Última Atualização: ${new Date(projeto.Integrações['Ultima atualização']).toLocaleString()}
-    → Token: ${projeto.Integrações['Refresh token'] ? '🔑 Presente' : '❌ Ausente'}
+    → Status: ${integracao.ativo ? '✅ Ativo' : '❌ Inativo'}
+    → Última Atualização: ${integracao['Ultima atualização'] ? 
+        new Date(integracao['Ultima atualização']).toLocaleString() : 'Não disponível'}
+    → Token: ${integracao['Refresh token'] ? '🔑 Presente' : '❌ Ausente'}
     -------------------------------------------`);
         });
 
-        console.log(`\n✅ Total: ${projetos.length} projeto(s) com integração válida`);
+        logger.success(`\n✅ Total: ${projetos.length} projeto(s) com integração válida`);
         
     } catch (error) {
-        console.error('\n❌ Erro no teste:', error);
+        logger.error('\n❌ Erro no teste:', error);
     }
-}
+};
 
 // Executa o teste
 testBuscarProjetoId();

@@ -21,58 +21,25 @@ const CLAUDE_CONFIG = {
 };
 
 /**
- * Analisa conteúdo com contexto específico
+ * Função única e flexível para usar o Claude
+ * @param {string} prompt - Prompt completo para o Claude
+ * @param {Object} options - Opções opcionais (model, maxTokens, temperature)
  */
-async function analyzeContent(content, projectContext) {
+async function analyzeContent(prompt, options = {}) {
     try {
         const response = await claude.messages.create({
-            model: CLAUDE_CONFIG.model,
-            max_tokens: CLAUDE_CONFIG.maxTokens,
+            model: options.model || CLAUDE_CONFIG.model,
+            max_tokens: options.maxTokens || CLAUDE_CONFIG.maxTokens,
+            temperature: options.temperature || CLAUDE_CONFIG.temperature,
             messages: [{
                 role: "user",
-                content: `
-                    Contexto do Projeto: ${projectContext}
-                    
-                    Conteúdo para análise: ${content}
-                    
-                    Por favor, analise se este conteúdo é relevante para o contexto do projeto.
-                    Responda apenas com:
-                    {
-                        "relevante": true/false,
-                        "score": 0-100,
-                        "razao": "breve explicação"
-                    }
-                `
-            }]
-        });
-
-        return JSON.parse(response.content[0].text);
-    } catch (error) {
-        logger.error('❌ Erro ao analisar com Claude:', error);
-        return null;
-    }
-}
-
-/**
- * Sumariza conteúdo
- */
-async function summarizeContent(content) {
-    try {
-        const response = await claude.messages.create({
-            model: CLAUDE_CONFIG.model,
-            max_tokens: CLAUDE_CONFIG.maxTokens,
-            messages: [{
-                role: "user",
-                content: `
-                    Sumarize o seguinte conteúdo em no máximo 3 parágrafos:
-                    ${content}
-                `
+                content: prompt
             }]
         });
 
         return response.content[0].text;
     } catch (error) {
-        logger.error('❌ Erro ao sumarizar com Claude:', error);
+        logger.error('❌ Erro ao usar Claude:', error);
         return null;
     }
 }
@@ -80,6 +47,5 @@ async function summarizeContent(content) {
 module.exports = {
     claude,
     CLAUDE_CONFIG,
-    analyzeContent,
-    summarizeContent
+    analyzeContent
 };
