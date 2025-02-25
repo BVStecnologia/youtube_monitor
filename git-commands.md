@@ -1,5 +1,5 @@
 # Enviar para nuvem (3 em 1)
-git add . && git commit -m "Sua mensagem" && git push origin main
+git add . ; git commit -m "Sua mensagem" ; git push origin main
 
 # Comandos básicos
 git status              # Ver estado das mudanças
